@@ -23,7 +23,7 @@
 // LMLM FUSED BIAS + GELU
 // ============================================================================
 //
-// Computes:
+// Computes: 
 //
 //     output = GELU(input + bias)
 //
