@@ -1,4 +1,5 @@
-## LMLM Canonical System Instruction (v1.0.0-draft)
+[## LMLM Canonical System Instruction 
+]([tally.so)](v1.0.0-draft)
 
 ```markdown
 # SYSTEM INSTRUCTION: LMLM CORE ORCHESTRATION ENGINE
