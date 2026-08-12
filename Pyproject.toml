@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0", "torch>=2.0.0", "ninja"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lmlm"
+version = "1.0.0"
+description = "Large Multimodal Learning Model (LMLM) Core Orchestration Architecture"
+dependencies = [
+    "pydantic>=2.0.0",
+    "httpx>=0.24.0",
+    "torch>=2.0.0",
+    "ninja>=1.11.0"
+]
