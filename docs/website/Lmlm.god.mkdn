@@ -1,6 +1,6 @@
 # Script.god 
 
-Yes. If that is the goal, Script.god should be designed as an information-coordination and model-synchronization layer for LMLM, not merely as a workflow language.
+designed as an information-coordination and model-synchronization layer for LMLM, not merely as a workflow language.
 The key architectural principle should be:
 One canonical information state → many models/agents → controlled synchronization → verification → propagation.
 I would design it like this:
@@ -1835,3 +1835,304 @@ Model Adapters
      └── custom models
 So your REGISTER, INSTRUCT, COORDINATE, SHARE, SYNC, ROUTE, POLICY, VERIFY, STATE, EVENT, CANCEL, and ROLLBACK become the high-level Script.god operations, while CONNECT, TASK, ACK, RESULT, etc. become the wire-level messages exchanged between the coordinator and models.
 That separation is what will allow one standalone Script.god to coordinate many completely different LMLM models without requiring every model to natively understand .god.
+
+Next is the wire protocol. This is the piece that makes different models actually communicate with the standalone Script.god coordinator.
+
+I would define GOD Protocol v0.1 around one envelope. Every message between Script.god and a model uses the same structure.
+
+GOD/0.1
+MESSAGE
+    id
+    type
+    coordination_id
+    sender
+    recipient
+    timestamp
+    priority
+    payload
+    context
+    constraints
+    capabilities
+    state
+    signature
+
+The message types are the ones you already established:
+
+CONNECT
+CAPABILITIES
+TASK
+ACK
+CONTEXT
+PROGRESS
+RESULT
+ERROR
+BLOCKED
+CANCEL
+VERIFY
+SYNC
+
+The normal lifecycle becomes:
+
+                 Script.god
+                     │
+                     │ CONNECT
+                     ▼
+                  Model
+                     │
+                     │ CAPABILITIES
+                     ▼
+                 Registry
+                     │
+                     │ TASK
+                     ▼
+                  Model
+                     │
+                     │ ACK
+                     ▼
+                 Coordinator
+                     │
+                     │ CONTEXT
+                     ▼
+                  Model
+                     │
+                     │ PROGRESS
+                     ▼
+                 Coordinator
+                     │
+                     │ RESULT
+                     ▼
+                 Verifier
+                     │
+                     │ VERIFY
+                     ▼
+                  Model
+                     │
+                     │ SYNC
+                     ▼
+              Canonical State
+
+A concrete message could look like this:
+
+{
+  "protocol": "GOD/0.1",
+  "type": "TASK",
+  "id": "MSG-000042",
+  "coordination_id": "LMLM-2026-0814-0001",
+  "sender": "script.god",
+  "recipient": "lmlm-code",
+  "timestamp": "2026-08-14T13:21:00Z",
+  "priority": "high",
+  "payload": {
+    "instruction": "Implement the requested CUDA optimization.",
+    "task_id": "TASK-0042"
+  },
+  "context": {
+    "project": "LMLM",
+    "language": "Go/CUDA"
+  },
+  "constraints": [
+    "run_tests",
+    "do_not_modify_unrelated_files"
+  ]
+}
+
+The model responds:
+
+{
+  "protocol": "GOD/0.1",
+  "type": "ACK",
+  "id": "MSG-000043",
+  "coordination_id": "LMLM-2026-0814-0001",
+  "sender": "lmlm-code",
+  "recipient": "script.god",
+  "payload": {
+    "task_id": "TASK-0042",
+    "status": "accepted"
+  }
+}
+
+During execution:
+
+{
+  "protocol": "GOD/0.1",
+  "type": "PROGRESS",
+  "coordination_id": "LMLM-2026-0814-0001",
+  "sender": "lmlm-code",
+  "recipient": "script.god",
+  "payload": {
+    "task_id": "TASK-0042",
+    "progress": 65,
+    "status": "running"
+  }
+}
+
+And finally:
+
+{
+  "protocol": "GOD/0.1",
+  "type": "RESULT",
+  "coordination_id": "LMLM-2026-0814-0001",
+  "sender": "lmlm-code",
+  "recipient": "script.god",
+  "payload": {
+    "task_id": "TASK-0042",
+    "status": "completed",
+    "artifacts": [
+      "fused_ops.cu",
+      "bindings.cpp"
+    ]
+  }
+}
+
+The coordinator then has authority to decide whether that result is accepted:
+
+RESULT
+   ↓
+Script.god
+   ↓
+VERIFY
+   ├── PASS → commit state
+   ├── FAIL → retry
+   ├── CONFLICT → resolve
+   └── BLOCKED → escalate
+
+For model discovery, the model sends:
+
+{
+  "protocol": "GOD/0.1",
+  "type": "CAPABILITIES",
+  "sender": "lmlm-code",
+  "recipient": "script.god",
+  "payload": {
+    "model": "LMLM-Code",
+    "version": "0.1.0",
+    "capabilities": [
+      "coding",
+      "debugging",
+      "cuda",
+      "github"
+    ],
+    "modalities": [
+      "text",
+      "code"
+    ],
+    "tools": [
+      "terminal",
+      "git"
+    ]
+  }
+}
+
+This allows Script.god to dynamically route tasks rather than relying on hard-coded model names:
+
+TASK: "Optimize CUDA kernel"
+          ↓
+Script.god
+          ↓
+Capability search
+          ↓
+┌───────────────┐
+│ lmlm-code     │ ← CUDA
+├───────────────┤
+│ lmlm-research │
+├───────────────┤
+│ lmlm-vision   │
+└───────────────┘
+          ↓
+lmlm-code selected
+
+For synchronization, the protocol should support versioning:
+
+{
+  "protocol": "GOD/0.1",
+  "type": "SYNC",
+  "coordination_id": "LMLM-2026-0814-0001",
+  "sender": "script.god",
+  "recipient": "lmlm-code",
+  "payload": {
+    "knowledge_version": "2026.08.14.42",
+    "changes": [
+      {
+        "topic": "CUDA",
+        "version": "new",
+        "action": "update"
+      }
+    ]
+  }
+}
+
+The model responds:
+
+{
+  "protocol": "GOD/0.1",
+  "type": "SYNC",
+  "sender": "lmlm-code",
+  "recipient": "script.god",
+  "payload": {
+    "status": "synchronized",
+    "knowledge_version": "2026.08.14.42"
+  }
+}
+
+Now we can put this directly into Go.
+
+The core protocol types should be:
+
+type GODMessage struct {
+	Protocol       string         `json:"protocol"`
+	Type           Command        `json:"type"`
+	ID             string         `json:"id"`
+	CoordinationID string         `json:"coordination_id"`
+	Sender         string         `json:"sender"`
+	Recipient      string         `json:"recipient"`
+	Timestamp      time.Time      `json:"timestamp"`
+	Priority       string         `json:"priority,omitempty"`
+	Payload        map[string]any `json:"payload,omitempty"`
+	Context        map[string]any `json:"context,omitempty"`
+	Constraints    []string       `json:"constraints,omitempty"`
+	Capabilities   []string       `json:"capabilities,omitempty"`
+	State          string         `json:"state,omitempty"`
+	Signature      string         `json:"signature,omitempty"`
+}
+
+Then Script.god can transport these messages over different mechanisms:
+
+GOD Protocol
+     │
+     ├── HTTP/REST
+     ├── WebSocket
+     ├── gRPC
+     ├── Unix socket
+     ├── TCP
+     ├── stdin/stdout
+     └── message broker
+
+For the first prototype, I’d use HTTP + JSON because it is simple to debug and almost every model-serving framework can participate.
+
+Later, WebSocket or gRPC can provide persistent, low-latency coordination.
+
+The resulting architecture is now:
+
+                    Script.god
+                         │
+                  Go Runtime
+                         │
+                 GOD Protocol
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+       HTTP/API       WebSocket       gRPC
+          │              │              │
+          ▼              ▼              ▼
+      Model A         Model B         Model C
+          │              │              │
+          └──────────────┼──────────────┘
+                         ▼
+                  LMLM Coordinator
+                         │
+                 ┌───────┴───────┐
+                 ▼               ▼
+             Knowledge        State
+               Store           Store
+
+The next step after this is the Model Adapter Interface. That is what lets lmlm-code, Llama, Ollama, OpenAI-compatible endpoints, custom Go models, and other AI systems all appear to Script.god as standardized GOD participants.
