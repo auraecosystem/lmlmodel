@@ -1,0 +1,5 @@
+-man python main.py start
+-man python main.py status
+-man python main.py sync
+-man python main.py task "Analyze this project"
+-god python main.py stop
