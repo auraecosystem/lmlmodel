@@ -2135,4 +2135,226 @@ The resulting architecture is now:
              Knowledge        State
                Store           Store
 
-The next step after this is the Model Adapter Interface. That is what lets lmlm-code, Llama, Ollama, OpenAI-compatible endpoints, custom Go models, and other AI systems all appear to Script.god as standardized GOD participants.
+If you mean “how do I pass information into the models through Script.god?”, the clean design is to make Script.god the single information gateway.
+
+You don’t directly send the same raw information to every model. Script.god receives it, packages it into a CONTEXT or SYNC message, determines which models need it, and sends the appropriate information to each.
+
+The basic flow is:
+
+Information
+    ↓
+Script.god
+    ↓
+Classify
+    ↓
+Verify
+    ↓
+Determine relevant models
+    ↓
+Create GOD message
+    ↓
+Model Adapter
+    ↓
+Model
+
+For example, suppose you have new information about CUDA:
+
+share "CUDA_UPDATE" {
+    information = """
+    CUDA optimization information goes here.
+    """
+    source = "verified_source"
+    version = "2026.08.14"
+    targets = [
+        "lmlm-code",
+        "lmlm-research"
+    ]
+}
+
+Script.god turns that into a protocol message:
+
+{
+  "protocol": "GOD/0.1",
+  "type": "CONTEXT",
+  "sender": "script.god",
+  "recipient": "lmlm-code",
+  "payload": {
+    "topic": "CUDA_UPDATE",
+    "information": "CUDA optimization information goes here.",
+    "version": "2026.08.14"
+  }
+}
+
+The model adapter then converts that message into whatever the actual model accepts.
+
+For a model with an HTTP API, for example:
+
+POST /context
+
+with the GOD message as JSON.
+
+For a local model, the adapter might turn it into:
+
+SYSTEM/CONTEXT:
+You are participating in LMLM coordination.
+COORDINATION UPDATE:
+Topic: CUDA_UPDATE
+Version: 2026.08.14
+Information:
+CUDA optimization information goes here.
+
+For a model that supports a persistent knowledge store, the adapter could instead write the information to its RAG/memory system.
+
+That gives you three different ways to pass information:
+
+1. CONTEXT
+   Temporary information for the current task.
+2. SYNC
+   Persistent knowledge/state synchronization.
+3. TASK
+   Information attached to an instruction that the model must use.
+
+For example:
+
+task "optimize_kernel" {
+    target = "lmlm-code"
+    context = [
+        "CUDA_UPDATE",
+        "PROJECT_ARCHITECTURE",
+        "CURRENT_CODE"
+    ]
+    instruction = """
+    Optimize the CUDA kernel using the supplied information.
+    """
+    verify = true
+}
+
+Script.god retrieves those context objects and sends one coordinated request to the model.
+
+For multiple models, it becomes:
+
+coordinate "build_feature" {
+    research {
+        model = "lmlm-research"
+        task = "research the technology"
+    }
+    implementation {
+        model = "lmlm-code"
+        depends_on = "research"
+        task = "implement the feature"
+    }
+    verification {
+        model = "lmlm-verifier"
+        depends_on = "implementation"
+        task = "verify implementation"
+    }
+}
+
+The information automatically flows:
+
+Research Model
+      │
+      │ RESULT
+      ▼
+Script.god
+      │
+      │ CONTEXT
+      ▼
+Coding Model
+      │
+      │ RESULT
+      ▼
+Script.god
+      │
+      │ CONTEXT
+      ▼
+Verification Model
+
+This is much better than trying to make every model directly communicate with every other model:
+
+Bad:
+A ↔ B
+A ↔ C
+A ↔ D
+B ↔ C
+B ↔ D
+C ↔ D
+
+Instead:
+
+              Script.god
+             /    |    \
+            /     |     \
+           A      B      C
+
+Script.god becomes the information broker and source of coordination truth.
+
+One particularly important feature should be broadcast versus target.
+
+broadcast {
+    topic = "LMLM_SYSTEM_UPDATE"
+    information = latest_verified_information
+}
+
+means all eligible models receive it.
+
+Whereas:
+
+share {
+    topic = "CUDA_UPDATE"
+    information = latest_cuda_information
+    targets = [
+        models.with_capability("cuda")
+    ]
+}
+
+means only relevant models receive it.
+
+And you can have automatic propagation:
+
+sync {
+    source = "latest_verified_information"
+    propagation = "automatic"
+    target = "relevant_models"
+    verify = true
+}
+
+Then a new piece of information can enter the LMLM ecosystem once:
+
+New Information
+      ↓
+Script.god
+      ↓
+Verification
+      ↓
+Canonical Knowledge
+      ↓
+Relevance Engine
+      ↓
+┌─────┼─────┐
+↓     ↓     ↓
+Code Research Security
+↓     ↓     ↓
+Models receive tailored context
+
+The important part is that Script.god does not need to know the internal neural architecture of each model. It only needs to know how to communicate with the model through its adapter.
+
+So the actual implementation we need next is:
+
+Script.god
+     ↓
+Information Manager
+     ↓
+GODMessage
+     ↓
+Model Adapter
+     ↓
+HTTP/WebSocket/gRPC
+     ↓
+LMLM Model
+
+Once we implement that ModelAdapter, you can literally have a command such as:
+
+script-god sync --topic CUDA
+
+and Script.god can discover the relevant LMLM models and pass the verified information to them automatically.
