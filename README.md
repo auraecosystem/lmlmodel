@@ -31,7 +31,10 @@ cd lmlmodel
 pip install -e .
 
 ```
-
+```bash
+man clone-git https://github.com/llvm/llvm-project.git
+cd llvm-project.git
+```
 ---
 
 ## 📁 Repository Structure
