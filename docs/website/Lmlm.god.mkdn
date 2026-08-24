@@ -120,7 +120,7 @@ You generally don’t want:
 ```Script.god
 New information
       ↓
-Fine-tune every model
+^Fine-tune every model
 You want:
                  New Information
                         ↓
@@ -131,6 +131,8 @@ You want:
              ┌──────────┴──────────┐
              ↓                     ↓
         Knowledge/RAG
+```
+```Script.god
 Model-specific
              ↓                 synchronization
         All models               when needed
@@ -148,9 +150,9 @@ For example:
 
     action = "synchronize"
 }
-  
+  ```
  // A model could subscribe to specific domainn:
-    
+```Script.god
     model VisionModel {
 
     subscribe [
@@ -161,7 +163,6 @@ For example:
 }
 ```
 While another model subscribes to programming:
-
 ```Script.god
 model CodingModel {
     subscribe [
