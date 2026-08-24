@@ -92,7 +92,7 @@ synchronize knowledge {
         }
     }
     }
-`
+```
 # This gives you several levels of synchronization.
 
 Level 1 — Context synchronization
