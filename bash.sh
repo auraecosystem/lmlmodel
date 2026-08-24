@@ -8,3 +8,8 @@ bazel run //:requirements.update
 
 # Verify that requirements_lock.txt is up-to-date with requirements.in (ideal for CI pipelines)
 bazel test //:requirements_test
+# Compile CUDA code
+nvcc -O3 vector_add.cu -o vector_add
+
+# Run executable
+./vector_add
