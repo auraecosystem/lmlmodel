@@ -31,7 +31,7 @@ I would design it like this:
                             Verification Layer
                                     │
                                     ▼
-                            Updated LMLM State
+Updated LMLM State
 The critical distinction is that you should NOT blindly “push the latest information into every model.” That creates synchronization problems, stale knowledge, poisoning risks, and unnecessary context/token costs.
 Instead, Script.god should maintain a canonical LMLM Knowledge State.
 For example:
@@ -70,7 +70,10 @@ update quantum_computing {
         synchronize()
     }
 }
+```
 The synchronization  gine decides what each model actually needs.
+
+```Script.god
 synchronize knowledge {
 
     target = LMLM.models
@@ -95,7 +98,7 @@ synchronize knowledge {
 ```
 
 # This gives you several levels of synchronization.
-
+```Script.god
 Level 1 — Context synchronization
 The newest information is injected into the model’s working context.
 
@@ -110,7 +113,7 @@ Embeddings/vector indexes are updated so models can retrieve the new information
 
 Level 5 — Model synchronization
 For information that genuinely needs to change model behavior, Script.god can trigger adapter/fine-tuning/retraining pipelines.
-
+```
 * This distinction is extremely important.
 You generally don’t want:
 
@@ -134,7 +137,7 @@ Model-specific
 ```
 // I would also give Script.god an event-driven information bus.
 For example:
-
+```Script.god
     event "KNOWLEDGE_UPDATED" {
 
     topic = "AI_RESEARCH"
@@ -156,10 +159,11 @@ For example:
         image_generation
     ]
 }
-
+```
 While another model subscribes to programming:
-model CodingModel {
 
+```Script.god
+model CodingModel {
     subscribe [
         programming,
         github,
@@ -168,9 +172,11 @@ model CodingModel {
         security
     ]
 }
-```Script.god 
+```
+
 then determines what information gets propagated where.
 I’d also make versioning mandatory:
+```Script.god
 Knowledge
  ├── v1
  ├── v2
@@ -253,7 +259,9 @@ For example:
 And the really interesting part is change propagation.
 Suppose LMLM discovers:
 CUDA API changed
-Script.god could automatically determine:
+Script.god could automatically
+```
+ determine:
 ```Script.god
 CUDA change
     ↓
