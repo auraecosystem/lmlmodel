@@ -1,10 +1,14 @@
 import asyncio
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+from core.governance import (
+    Approval, ExecutionIntent, Mandate, MandatePolicyEngine, PolicyResult,
+)
 from core.state import Observation, ToolDefinition
 
 
 class ToolRegistry:
-    """Strongly-typed registry executing registered tools with observation tracking."""
+    """Tool registry with an explicit mandate-governed execution entry point."""
 
     def __init__(self):
         self._tools: Dict[str, Callable] = {}
@@ -35,7 +39,7 @@ class ToolRegistry:
                 result = await func(**kwargs)
             else:
                 result = func(**kwargs)
-            
+
             return Observation(
                 step_id=step_id,
                 tool_name=tool_name,
@@ -50,3 +54,39 @@ class ToolRegistry:
                 output=None,
                 error=str(e)
             )
+
+    async def execute_governed(
+        self,
+        step_id: str,
+        intent: ExecutionIntent,
+        *,
+        mandate: Optional[Mandate],
+        policy_engine: MandatePolicyEngine,
+        task_id: str,
+        approval: Optional[Approval] = None,
+    ) -> Tuple[Observation, PolicyResult]:
+        """Authorize the exact intent before dispatching its registered tool.
+
+        Callers must construct the intent from the planned operation, not from
+        untrusted worker output. A missing mandate or any non-ALLOW decision
+        prevents the tool function from being invoked.
+        """
+        decision = policy_engine.evaluate(
+            mandate, intent, approval=approval, task_id=task_id
+        )
+        if decision.decision.value != "allow":
+            return (
+                Observation(
+                    step_id=step_id,
+                    tool_name=intent.tool,
+                    success=False,
+                    output=None,
+                    error=f"Execution blocked by LMLM policy: {decision.reason}",
+                ),
+                decision,
+            )
+
+        observation = await self.execute(
+            step_id, intent.tool, **dict(intent.parameters)
+        )
+        return observation, decision
