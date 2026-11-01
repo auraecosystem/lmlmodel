@@ -106,5 +106,5 @@ class PolicyEngineTests(unittest.TestCase):
         self.assertEqual(self.evaluate(intent=intent).decision, Decision.DENY)
 
 
-if __test__ == "__main__":
+if __name__ == "__main__":
     unittest.main()
