@@ -92,7 +92,7 @@ def _reject_non_json(value: Any) -> Any:
     raise TypeError(f"unsupported parameter type: {type(value).__name__}")
 
 
-class PolicyEngine:
+class MandatePolicyEngine:
     """Evaluate mandates and approvals; unknown or malformed context denies."""
 
     def evaluate(
