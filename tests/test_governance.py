@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 
 from core.governance import (
-    Approval, Decision, ExecutionIntent, Mandate, PolicyEngine, request_digest,
+    Approval, Decision, ExecutionIntent, Mandate, MandatePolicyEngine, request_digest,
 )
 
 
@@ -23,7 +23,7 @@ class PolicyEngineTests(unittest.TestCase):
             action="read", resource="workspace/project-a",
             parameters={"path": "README.md"},
         )
-        self.engine = PolicyEngine()
+        self.engine = MandatePolicyEngine()
 
     def evaluate(self, mandate=None, intent=None, approval=None, task_id="task-1"):
         return self.engine.evaluate(
