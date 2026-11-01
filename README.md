@@ -1,8 +1,10 @@
+
 # LML Model (`lmlmodel`)
 
 [![Aura Ecosystem](https://img.shields.io/badge/Ecosystem-Aura-blue.svg)](https://github.com/auraecosystem)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Dependabot](https://img.shields.io/badge/Dependabot-Active-brightgreen.svg)](.github/dependabot.yml)
+[![Python governance tests](https://github.com/auraecosystem/lmlmodel/actions/workflows/python-governance-tests.yml/badge.svg)](https://github.com/auraecosystem/lmlmodel/actions/workflows/python-governance-tests.yml)
 
 The core language model architecture and inference engine for the **Aura Ecosystem**.
 
