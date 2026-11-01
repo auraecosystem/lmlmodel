@@ -1,4 +1,4 @@
-// wmma_async_pipeline.cu - Pipelined Tensor Core GEMM with cp.async (sm_80+)
+// wmma_async_pipeline.cu - Pipelined Tensor Core  GEMM with cp.async (sm_80+)
 #include <iostream>
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
@@ -106,3 +106,5 @@ __global__ void wmmaAsyncPipelinedGemm(const half *A, const half *B, float *C, i
     float *c_ptr = C + (warpRow * WMMA_M) * N + (warpCol * WMMA_N);
     wmma::store_matrix_sync(c_ptr, c_frag, N, wmma::mem_row_major);
 }
+// # cp.async 
+
