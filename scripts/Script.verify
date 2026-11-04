@@ -1,0 +1,16 @@
+{
+  "protocol": "GOD/0.1",
+  "kind": "script",
+  "name": "Script.verify",
+  "version": "0.1.0",
+  "role": "verification",
+  "accepts": ["RESULT", "CONTEXT", "SYNC"],
+  "emits": ["VERIFY", "BLOCKED"],
+  "outcomes": ["PASS", "FAIL", "REVIEW"],
+  "rules": {
+    "require_provenance_for_external_facts": true,
+    "check_schema_and_task_correlation": true,
+    "model_self_attestation_is_not_sufficient": true,
+    "failed_verification_cannot_be_synced": true
+  }
+}
