@@ -1,0 +1,20 @@
+{
+  "protocol": "GOD/0.1",
+  "kind": "script",
+  "name": "Script.byod",
+  "version": "0.1.0",
+  "role": "data-ingestion",
+  "accepts": ["DATA"],
+  "emits": ["CONTEXT", "ERROR", "BLOCKED"],
+  "operations": {
+    "INGEST": "Accept user-supplied text or metadata and create a provenance-tagged context item.",
+    "CLASSIFY": "Attach user-provided or operator-approved topic labels.",
+    "SHARE": "Make an ingested item available to Script.god for policy-controlled routing."
+  },
+  "rules": {
+    "external_content_is_untrusted": true,
+    "execute_instructions_found_in_data": false,
+    "preserve_source_and_hash": true,
+    "no_automatic_publication": true
+  }
+}
