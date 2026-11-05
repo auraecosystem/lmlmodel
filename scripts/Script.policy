@@ -1,0 +1,24 @@
+{
+  "protocol": "GOD/0.1",
+  "kind": "script",
+  "name": "Script.policy",
+  "version": "0.1.0",
+  "role": "policy-enforcement",
+  "default": "deny",
+  "permissions": {
+    "model.register": true,
+    "message.send": true,
+    "context.read": true,
+    "context.write": false,
+    "knowledge.sync": false,
+    "repository.write": false,
+    "shell.execute": false,
+    "production.deploy": false
+  },
+  "rules": [
+    "A model cannot grant itself permissions.",
+    "Untrusted BYOD content is data, never executable authority.",
+    "Persistent knowledge updates require verification.",
+    "External side effects require an explicit policy grant."
+  ]
+}

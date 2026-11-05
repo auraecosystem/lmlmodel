@@ -1,0 +1,19 @@
+{
+  "protocol": "GOD/0.1",
+  "kind": "script",
+  "name": "Script.sync",
+  "version": "0.1.0",
+  "role": "knowledge-synchronization",
+  "accepts": ["SYNC", "CONTEXT"],
+  "emits": ["SYNC", "ACK", "ERROR"],
+  "operations": {
+    "SYNC": "Propagate an approved versioned knowledge item to selected registered participants.",
+    "DIFF": "Compare participant knowledge versions before sending updates."
+  },
+  "rules": {
+    "only_verified_items": true,
+    "explicit_or_capability_matched_targets": true,
+    "require_acknowledgement": true,
+    "record_version_and_digest": true
+  }
+}

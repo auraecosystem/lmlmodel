@@ -1,0 +1,34 @@
+name: Script.god Runtime
+
+on:
+  push:
+    paths:
+      - "scriptgod/**"
+      - ".github/workflows/scriptgod.yml"
+  pull_request:
+    paths:
+      - "scriptgod/**"
+      - ".github/workflows/scriptgod.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scriptgod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.x"
+          cache-dependency-path: scriptgod/go.mod
+      - name: Check formatting
+        run: |
+          test -z "$(gofmt -l .)"
+      - name: Run tests
+        run: go test ./...
+      - name: Build runtime
+        run: go build ./...
