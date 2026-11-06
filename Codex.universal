@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+IMAGE="ghcr.io/openai/codex-universal:sha256-905e512f36460e1be4cfedb30928a8a28299edb0fcd5de7998ceaa72d27fe304"
+PROJECT="$(basename "$PWD")"
+
+echo "Pulling Codex Universal..."
+docker pull "$IMAGE"
+
+echo "Starting LMLM development environment..."
+
+docker run --rm -it \
+  --name lmlm-dev \
+  -e CODEX_ENV_PYTHON_VERSION=3.12 \
+  -e CODEX_ENV_NODE_VERSION=20 \
+  -e CODEX_ENV_RUST_VERSION=1.87.0 \
+  -e CODEX_ENV_GO_VERSION=1.23.8 \
+  -e CODEX_ENV_SWIFT_VERSION=6.2 \
+  -e CODEX_ENV_RUBY_VERSION=3.4.4 \
+  -e CODEX_ENV_PHP_VERSION=8.4 \
+  -v "$PWD:/workspace/$PROJECT" \
+  -w "/workspace/$PROJECT" \
+  "$IMAGE" \
+  bash
