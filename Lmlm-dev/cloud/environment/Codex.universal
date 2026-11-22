@@ -21,4 +21,4 @@ docker run --rm -it \
   -v "$PWD:/workspace/$PROJECT" \
   -w "/workspace/$PROJECT" \
   "$IMAGE" \
-  bash
+  bash 
