@@ -1,3 +1,9 @@
+git clone https://github.com/auraecosystem/Lmlmxtend.git
+cd Lmlmxtend
+
+LMLM_REPO_ROOT=/path/to/lmlm \
+LMLM_MODEL_DIR=/path/to/installed-model \
+bash scripts/e2e_native_lmlm.sh
 # Build the core library and fetch all dependencies. automatically
 bazel build //lmlmodel:lmlmodel
 
